@@ -6,3 +6,4 @@ project
 target
 
 src/main/scala/FindTest.scala__
+testDir
