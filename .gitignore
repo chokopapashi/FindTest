@@ -1,6 +1,7 @@
 *~
 *.lnk
 *.bat
+*.sh
 *.swp
 project
 target
