@@ -6,6 +6,7 @@ import scala.annotation.tailrec
 import scala.collection.immutable.Stack
 import scala.collection.mutable.ListBuffer
 import scala.language.implicitConversions
+import scala.language.postfixOps
 
 object DirTreeCreator {
 
@@ -34,7 +35,12 @@ object DirTreeCreator {
     def listFiles(dir: File): List[FileHolder] =
         dir.listFiles(dirTreeFileFilter _).map(FileWrap(_)).toList :+ Sentinel
 
-    def vertexName(file: File, hierarchy: String) = hierarchy+ file.getName
+    def fileType(file: File): String = {
+        import scala.sys.process._
+        "c:/cygwin/bin/file.exe" #| file.getAbsolutePath !!
+    }
+
+    def fileInfo(file: File, hierarchy: String, branch: String) = hierarchy + file.getName + ":" + fileType(file)
 
     /* Use view bounds */
     def init[B <% Seq[_]](l: B): B = if(l.nonEmpty) l.init.asInstanceOf[B] else l
@@ -44,14 +50,14 @@ object DirTreeCreator {
         files match {
             case Nil => /* Nothing to do */
             case FileWrap(f) :: (rofs @ List(Sentinel, _*)) => {
-                outBuffer += vertexName(f, hierarchy.mkString + "└")
+                outBuffer += fileInfo(f, hierarchy.mkString, "└")
                 f match {
                     case d if(d.isDirectory) => downDirectoryTree(listFiles(d) ::: rofs, hierarchy :+ "　", outBuffer)
                     case _ => downDirectoryTree(rofs, hierarchy, outBuffer)
                 }
             }
             case FileWrap(f) :: rofs => {
-                outBuffer += vertexName(f, hierarchy.mkString + "├")
+                outBuffer += fileInfo(f, hierarchy.mkString, "├")
                 f match {
                     case d if(d.isDirectory) => downDirectoryTree(listFiles(d) ::: rofs, hierarchy :+ "│", outBuffer)
                     case _ => downDirectoryTree(rofs, hierarchy, outBuffer)
