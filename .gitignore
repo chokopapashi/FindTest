@@ -5,6 +5,7 @@
 *.swp
 project
 target
+.svn
 
 src/main/scala/FindTest.scala__
 testDir
