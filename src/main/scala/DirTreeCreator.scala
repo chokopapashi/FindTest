@@ -7,6 +7,7 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.DosFileAttributes
 import java.nio.file.attribute.FileTime
 import java.time.ZoneId
+import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
 import scala.annotation.tailrec
@@ -22,7 +23,7 @@ object DirTreeCreator {
         def accept(file: File): Boolean = func(file)
     }
 
-    val MAX_LINE_BYTE_WIDTH = 50
+    val MAX_LINE_BYTE_WIDTH = 70
 
     def fileAttributes_fileType(file: File): String = {
         import scala.sys.process._
@@ -185,7 +186,13 @@ object DirTreeCreator {
     case class FileWrap(file: File) extends FileHolder
 
     def listFiles(dir: File): List[FileHolder] =
-        dir.listFiles(dirTreeFileFilter _).map(FileWrap(_)).toList :+ Sentinel
+        dir.listFiles(dirTreeFileFilter _).sortWith((f1,f2) =>
+            if((f1.isDirectory) && (f2.isDirectory)) f1.getName < f2.getName
+            else if(f1.isDirectory) true
+            else if(f2.isDirectory) false
+            else f1.getName < f2.getName
+        ).map(FileWrap(_)).toList :+ Sentinel
+//        dir.listFiles(dirTreeFileFilter _).map(FileWrap(_)).toList :+ Sentinel
 
     /* Use view bounds */
     def init[B <% Seq[_]](l: B): B = if(l.nonEmpty) l.init.asInstanceOf[B] else l
@@ -222,8 +229,10 @@ object DirTreeCreator {
         if(!root.exists)
             sys.exit(2)
 
-        println("File/Folder                                        Size     Attr Creation          LastModified      LastAccess       ")
-        println("--------------------------------------------------+--------+----+-----------------+-----------------+-----------------")
+        println(s"""[root = ${root.getAbsolutePath} , Creation DateTime = ${ZonedDateTime.now.format(DateTimeFormatter.ofPattern("yyyy/MM/dd-HH:mm:ss"))}]""")
+        println()
+        println("File/Folder                                                            Size     Attr Creation          LastModified      LastAccess       ")
+        println("----------------------------------------------------------------------+--------+----+-----------------+-----------------+-----------------")
 
         val treeBuffer = mutable.ListBuffer.empty[String]
         setupRootInfo(treeBuffer,root)
